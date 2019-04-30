@@ -1,5 +1,47 @@
+/* eslint-disable */
 (function () {
+  function syntaxHighlight (json) {
+    if (typeof json !== 'string') {
+      json = JSON.stringify(json, undefined, 2)
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    json = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      var cls = 'number'
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'key'
+        } else {
+          cls = 'string'
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'boolean'
+      } else if (/null/.test(match)) {
+        cls = 'null'
+      }
+      return '<span class="' + cls + '">' + match + '</span>'
+    })
+
+    return json
+  }
+
+  /**
+   * Send request to server to verify honey
+   */
+  function verify (e) {
+    const value = document.querySelector('#verifyInput').value
+
+    window.fetch(`http://localhost:4040/api/honey/${value}`)
+      .then(r => r.json())
+      .then(r => {
+        document.querySelector('div.hero-output').innerHTML = `<pre>${JSON.stringify(r, null, 2)}</pre>`
+      })
+  }
+
   const doc = document.documentElement
+
+  const verifyButton = document.querySelector('#verify')
+
+  verifyButton.addEventListener('click', verify)
 
   doc.classList.remove('no-js')
   doc.classList.add('js')
@@ -18,7 +60,9 @@
     })
 
     /* global anime */
-    const heroAnimation = anime.timeline({ autoplay: false })
+    const heroAnimation = anime.timeline({
+      autoplay: false
+    })
     const strokedElement = document.querySelector('.stroke-animation')
 
     strokedElement.setAttribute('stroke-dashoffset', anime.setDashoffset(strokedElement))
